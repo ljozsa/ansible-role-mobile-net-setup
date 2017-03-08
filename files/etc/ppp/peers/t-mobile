@@ -1,0 +1,12 @@
+ hide-password
+ nopcomp
+ noauth
+ connect "/usr/sbin/chat -v -f /etc/chatscripts/t-mobile"
+ debug
+ /dev/ttyUSB1
+ 230400
+ defaultroute
+ noipdefault
+ usepeerdns
+ user "gprs"
+ ipparam tmobile

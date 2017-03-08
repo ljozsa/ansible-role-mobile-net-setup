@@ -1,0 +1,62 @@
+- name: "copy authorized_key"
+  authorized_key:
+    user: root
+    state: present
+    key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
+
+- name: "generate ssh key for root"
+  user:
+    name: root
+    ssh_key_bits: 4096
+    generate_ssh_key: yes
+
+#- name: "lock ogn/pi account"
+#  command: passwd {{ item }} -l
+#  with_items:
+#    - ogn
+#    - pi
+
+- name: "disable ipv6"
+  sysctl:
+    name: net.ipv6.conf.all.disable_ipv6
+    value: 1
+
+- name: "install necessary packages"
+  apt:
+    name: "{{ item }}"
+  with_items:
+    - openvpn
+    - modemmanager
+    - ppp
+
+- name: "ensure ppp0 interface config is in config file"
+  blockinfile:
+    dest: /etc/network/interfaces
+    block: |
+      auto ppp0
+      iface ppp0 inet ppp
+        provider t-mobile
+
+- name: "create necessary dirs"
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - /etc/chatscripts
+    - /etc/ppp/peers
+
+- name: "copy ppp chatscripts to place"
+  copy:
+    src: '{{ item.src }}'
+    dest: '{{ item.dest }}'
+    directory_mode: yes
+  with_items:
+    - { src: etc/chatscripts/t-mobile, dest: /etc/chatscripts/t-mobile }
+    - { src: etc/ppp/chap-secrets, dest: /etc/ppp/chap-secrets }
+    - { src: etc/ppp/peers/t-mobile, dest: /etc/ppp/peers/t-mobile }
+
+- name: "add ifup ppp0 to /etc/rc.local"
+  lineinfile:
+    dest: /etc/rc.local
+    insertbefore: exit 0
+    line: ifup ppp0

@@ -1,0 +1,7 @@
+ABORT        BUSY
+ABORT        "NO CARRIER"
+ABORT        ERROR
+"" "AT&F"
+OK AT+CGDCONT=1,"IP","internet.t-mobile.cz"
+"" "ATD*99#"
+CONNECT 'dc'
