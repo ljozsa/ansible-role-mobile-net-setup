@@ -10,11 +10,13 @@
     ssh_key_bits: 4096
     generate_ssh_key: yes
 
-#- name: "lock ogn/pi account"
-#  command: passwd {{ item }} -l
-#  with_items:
-#    - ogn
-#    - pi
+- name: "lock ogn/pi account"
+  user:
+    name: "{{ item }}"
+    password: ""
+  with_items:
+    - ogn
+    - pi
 
 - name: "disable ipv6"
   sysctl:
@@ -35,6 +37,7 @@
     block: |
       auto ppp0
       iface ppp0 inet ppp
+        pre-up sleep 10
         provider t-mobile
 
 - name: "create necessary dirs"
