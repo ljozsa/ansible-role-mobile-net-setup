@@ -44,10 +44,10 @@ install:
 
 script:
   # Ansible syntax check.
-  - sudo docker exec exec ${OS_TAG} ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml --syntax-check
+  - sudo docker exec ${OS_TAG} ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml --syntax-check
 
   # Test role.
-  - sudo docker exec exec ${OS_TAG} ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml -vv
+  - sudo docker exec ${OS_TAG} ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml -vv
 
   # Test role idempotence.
   - idempotence=$(mktemp)
