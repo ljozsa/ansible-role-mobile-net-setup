@@ -2,51 +2,52 @@
 language: python
 sudo: required
 
-services: docker
+services: 
+  - docker
 
 env:
-  - distro: centos:7
-    init: /usr/lib/systemd/systemd
-    run_opts: "--privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
-  - distro: centos:6
-    init: /sbin/init
-    run_opts: ""
-  - distro: fedora:24
-    init: /usr/lib/systemd/systemd
-    run_opts: "--privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
-  - distro: ubuntu:16.04
-    init: /lib/systemd/systemd
-    run_opts: "--privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
-  - distro: ubuntu:14.04
-    init: /sbin/init
-    run_opts: ""
-  - distro: ubuntu:12.04
-    init: /sbin/init
-    run_opts: ""
-  - distro: debian:jessie
-    init: /lib/systemd/systemd
-    run_opts: "--privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
+  global:
+    COMMAND=/usr/lib/systemd/systemd --system
+  matrix:
+    - DOCKER_TAG=centos:7
+      OS_TAG=centos-7
+      OS=centos
+    - DOCKER_TAG=centos:6
+      OS_TAG=centos-6
+      OS=centos
+      COMMAND=/sbin/init
+    - DOCKER_TAG=fedora:latest
+      OS_TAG=fedora-latest
+      OS=fedora
+    - DOCKER_TAG=fedora:25
+      OS_TAG=fedora-25
+      OS=fedora
+    - DOCKER_TAG=fedora:24
+      OS_TAG=fedora-24
+      OS=fedora
+    - DOCKER_TAG=ubuntu:16.10
+      DOCKER_ARGS=-t
+      OS_TAG=ubuntu-16.10
+      OS=ubuntu
+      COMMAND=/bin/bash
+    - DOCKER_TAG=ubuntu:16.04
+      OS_TAG=ubuntu-16.04
+      OS=ubuntu
+      COMMAND=/bin/systemd --system
 
 before_install:
-  # Pull container.
-  - 'docker pull ${distro}'
+  - sudo docker pull ${DOCKER_TAG}
+
+install:
+    - sudo docker run --detach ${DOCKER_ARGS} -e "container=docker"  -v /sys/fs/cgroup:/sys/fs/cgroup:ro --cap-add NET_ADMIN --cap-add SYS_ADMIN --device /dev/net/tun --volume="${PWD}":/etc/ansible/roles/ansible-role-openvpn:ro --name ${OS_TAG} ${DOCKER_TAG} ${COMMAND}
+  - ./tests/setup-${OS}
+  - sudo docker exec ${OS_TAG} ansible -m setup -c local -i 127.0.0.1, all
 
 script:
-  - container_id=$(mktemp)
-  # Run container in detached state.
-  - 'docker run --detach --volume="${PWD}":/etc/ansible/roles/role_under_test:ro ${run_opts} ${distro} "${init}" > "${container_id}"'
-
-  # Install ansible
-  - 'docker exec --tty "$(cat ${container_id})" env TERM=xterm if [[ $(type yum 2>/dev/null) ]]; then yum -y install ansible; fi;'
-  - 'docker exec --tty "$(cat ${container_id})" env TERM=xterm if [[ $(type apt-get 2>/dev/null) ]]; then aptitude -y update; aptitude -y install ansible; fi;'
- 
-
   # Ansible syntax check.
   - 'docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml --syntax-check'
 
   # Test role.
-  - 'docker exec --tty "$(cat ${container_id})" env TERM=xterm ls -l /etc/'
-  - 'docker exec --tty "$(cat ${container_id})" env TERM=xterm ls -l /etc/network/'
   - 'docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml'
 
   # Test role idempotence.
@@ -57,11 +58,6 @@ script:
     | grep -q 'changed=0.*failed=0'
     && (echo 'Idempotence test: pass' && exit 0)
     || (echo 'Idempotence test: fail' && exit 1)
-  # Ensure Java is installed.
-  #- 'docker exec --tty "$(cat ${container_id})" env TERM=xterm which java'
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/
-
-  #- sudo docker run --privileged --detach --net=host --volume="${PWD}":/etc/ansible/roles/ansible-role-mobile-net-setup:ro --name debian-${DEBIAN_VERSION} debian:${DEBIAN_VERSION} sleep 300
-  #- sudo docker run --privileged --detach --net=host --volume="${PWD}":/etc/ansible/roles/ansible-role-mobile-net-setup:ro --name centos-${CENTOS_VERSION} debian:${CENTOS_VERSION} sleep 300
