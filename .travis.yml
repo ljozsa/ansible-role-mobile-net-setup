@@ -6,25 +6,38 @@ services:
   - docker
 
 env:
-  - OS_VERSION=7
-  - OS_VERSION=6
+  - DEBIAN_VERSION=jessie
+  - CENTOS_VERSION=6
+  - CENTOS_VERSION=7
 
 before_install:
-  - sudo docker pull centos:${OS_VERSION}
+  - sudo docker pull debian:${OS_VERSION}
 
 install:
-  - sudo docker run --privileged --detach --net=host --volume="${PWD}":/etc/ansible/roles/ansible-role-mobile-net-setup:ro --name centos-${OS_VERSION} centos:${OS_VERSION} sleep 300
-  - sudo docker exec centos-${OS_VERSION} yum -y install epel-release
-  - sudo docker exec centos-${OS_VERSION} yum -y install ansible
+  - sudo docker run --privileged --detach --net=host --volume="${PWD}":/etc/ansible/roles/ansible-role-mobile-net-setup:ro --name debian-${DEBIAN_VERSION} debian:${DEBIAN_VERSION} sleep 300
+  - sudo docker run --privileged --detach --net=host --volume="${PWD}":/etc/ansible/roles/ansible-role-mobile-net-setup:ro --name centos-${CENTOS_VERSION} debian:${CENTOS_VERSION} sleep 300
+
+  - sudo docker exec debian-${DEBIAN_VERSION} aptitude -q -y update
+  - sudo docker exec debian-${DEBIAN_VERSION} aptitude -q -y install ansible
+
+  - sudo docker exec debian-${OS_VERSION} yum -y install epel-release
+  - sudo docker exec debian-${OS_VERSION} yum -y install ansible
 
 script:
+  # CENTOS
   # Check syntax of ansible playbook
-  - sudo docker exec centos-${OS_VERSION} ansible-playbook /etc/ansible/roles/ansible-role-mobile-net-setup/tests/test.yml --syntax-check
+  - sudo docker exec centos-${CENTOS_VERSION} ansible-playbook /etc/ansible/roles/ansible-role-mobile-net-setup/tests/test.yml --syntax-check
   # Run ansible playbook
-  - sudo docker exec centos-${OS_VERSION} ansible-playbook /etc/ansible/roles/ansible-role-mobile-net-setup/tests/test.yml
+  - sudo docker exec centos-${CENTOS_VERSION} ansible-playbook /etc/ansible/roles/ansible-role-mobile-net-setup/tests/test.yml
+  # DEBIAN
+  # Check syntax of ansible playbook
+  - sudo docker exec debian-${DEBIAN_VERSION} ansible-playbook /etc/ansible/roles/ansible-role-mobile-net-setup/tests/test.yml --syntax-check
+  # Run ansible playbook
+  - sudo docker exec debian-${DEBIAN_VERSION} ansible-playbook /etc/ansible/roles/ansible-role-mobile-net-setup/tests/test.yml
 
 after_script:
-  - sudo docker stop centos-${OS_VERSION}
+  - sudo docker stop centos-${CENTOS_VERSION}
+  - sudo docker stop debian-${DEBIAN_VERSION}
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/
