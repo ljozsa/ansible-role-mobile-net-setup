@@ -33,6 +33,10 @@ env:
       OS_TAG=ubuntu-16.04
       OS=ubuntu
       COMMAND=/bin/systemd --system
+    - DOCKER_TAG=debian:8
+      OS_TAG=debian-8
+      OS=ubuntu
+      COMMAND=/bin/systemd --system
 
 before_install:
   - sudo docker pull ${DOCKER_TAG}
