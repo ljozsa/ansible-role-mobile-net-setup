@@ -36,6 +36,9 @@ script:
   # Run container in detached state.
   - 'docker run --detach --volume="${PWD}":/etc/ansible/roles/role_under_test:ro ${run_opts} ${distro} "${init}" > "${container_id}"'
 
+  # Install ansible
+  - 'docker exec --tty "$(cat ${container_id})" env TERM=xterm if [[ $(type yum 2>/dev/null) ]] ;then yum -y install ansible;fi; if [[ $(type apt-get 2>/dev/null) ]]; then aptitude -y update; aptitude -y install ansible;fi;'
+
   # Ansible syntax check.
   - 'docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml --syntax-check'
 
