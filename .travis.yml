@@ -11,7 +11,8 @@ env:
   - CENTOS_VERSION=7
 
 before_install:
-  - sudo docker pull debian:${OS_VERSION}
+  - sudo docker pull debian:${DEBIAN_VERSION}
+  - sudo docker pull centos:${CENTOS_VERSION}
 
 install:
   - sudo docker run --privileged --detach --net=host --volume="${PWD}":/etc/ansible/roles/ansible-role-mobile-net-setup:ro --name debian-${DEBIAN_VERSION} debian:${DEBIAN_VERSION} sleep 300
