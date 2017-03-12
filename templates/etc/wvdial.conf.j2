@@ -1,0 +1,16 @@
+[Dialer Defaults]
+ New PPPD = yes
+ Phone = *99***#
+ Modem = {{ gsm_modem_usb_iface }}
+ Modem Type = USB Modem
+ Baud = 460800
+ ISDN = 0
+ Username = “{{ gsm_username }}”
+ Password = “{{ gsm_password }}”
+ Init1 = ATZ
+ Init2 = ATQ0 V1 E1 S0=0
+ Init3 = AT+CGDCONT=1,"IP","{{ gsm_apn }}"
+ Stupid mode = 1
+ Auto DNS = yes
+ Ask Password = 0
+ Dial Command = ATDT

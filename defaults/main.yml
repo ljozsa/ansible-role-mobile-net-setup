@@ -1,2 +1,5 @@
 ---
-# defaults file for ogn
+gsm_apn: internet.t-mobile.cz
+gsm_modem_usb_iface: /dev/ttyUSB1
+gsm_username: gprs
+gsm_password: gprs

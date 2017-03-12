@@ -1,0 +1,12 @@
+hide-password
+nopcomp
+noauth
+connect "/usr/sbin/chat -v -f /etc/chatscripts/mobile"
+debug
+{{ gsm_modem_usb_iface }}
+230400
+defaultroute
+noipdefault
+usepeerdns
+user "{{ gsm_username }}"
+ipparam mobile

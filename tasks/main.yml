@@ -19,7 +19,7 @@
       auto ppp0
       iface ppp0 inet ppp
         pre-up sleep 10
-        provider t-mobile
+        provider mobile
 
 - name: "create necessary dirs"
   file:
@@ -30,14 +30,14 @@
     - /etc/ppp/peers
 
 - name: "copy ppp chatscripts to place"
-  copy:
+  template:
     src: '{{ item.src }}'
     dest: '{{ item.dest }}'
     directory_mode: yes
   with_items:
-    - { src: etc/chatscripts/t-mobile, dest: /etc/chatscripts/t-mobile }
-    - { src: etc/ppp/chap-secrets, dest: /etc/ppp/chap-secrets }
-    - { src: etc/ppp/peers/t-mobile, dest: /etc/ppp/peers/t-mobile }
+    - { src: etc/chatscripts/mobile.j2, dest: /etc/chatscripts/mobile }
+    - { src: etc/ppp/chap-secrets.j2, dest: /etc/ppp/chap-secrets }
+    - { src: etc/ppp/peers/mobile.j2, dest: /etc/ppp/peers/mobile }
 
 - name: "add ifup ppp0 to /etc/rc.local"
   lineinfile:
