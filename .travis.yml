@@ -13,7 +13,7 @@ before_install:
   - sudo docker pull centos:${OS_VERSION}
 
 install:
-  - sudo docker run --detach --net=host --volume="${PWD}":/etc/ansible/roles/ansible-role-mobile-net-setup:ro --name centos-${OS_VERSION} centos:${OS_VERSION} sleep 300
+  - sudo docker run --privileged --detach --net=host --volume="${PWD}":/etc/ansible/roles/ansible-role-mobile-net-setup:ro --name centos-${OS_VERSION} centos:${OS_VERSION} sleep 300
   - sudo docker exec centos-${OS_VERSION} yum -y install epel-release
   - sudo docker exec centos-${OS_VERSION} yum -y install ansible
 
@@ -22,7 +22,6 @@ script:
   - sudo docker exec centos-${OS_VERSION} ansible-playbook /etc/ansible/roles/ansible-role-mobile-net-setup/tests/test.yml --syntax-check
   # Run ansible playbook
   - sudo docker exec centos-${OS_VERSION} ansible-playbook /etc/ansible/roles/ansible-role-mobile-net-setup/tests/test.yml
-  - sudo docker exec centos-${OS_VERSION} ls -l /proc/
 
 after_script:
   - sudo docker stop centos-${OS_VERSION}
