@@ -1,21 +1,30 @@
 ---
+language: python
 sudo: required
-
-env:
-  - distro: debian8
-    init: /lib/systemd/systemd
-    run_opts: "--privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
 
 services:
   - docker
 
+env:
+  - OS_VERSION=7
+  - OS_VERSION=6
+
 before_install:
-  - 'docker pull geerlingguy/docker-${distro}-ansible:latest'
+  - sudo docker pull centos:${OS_VERSION}
+
+install:
+  - sudo docker run --detach --volume="${PWD}":/etc/ansible/roles/mobile-net-setup-role:ro --name centos-${OS_VERSION} centos:${OS_VERSION} sleep 300
+  - sudo docker exec centos-${OS_VERSION} yum -y install epel-release
+  - sudo docker exec centos-${OS_VERSION} yum -y install ansible
 
 script:
-  - container_id=$(mktemp)
-  - 'docker run --detach --volume="${PWD}":/etc/ansible/roles/role_under_test:ro ${run_opts} geerlingguy/docker-${distro}-ansible:latest "${init}" > "${container_id}"'
-  - docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml --syntax-check
-  - docker exec --tty "$(cat ${container_id})" env TERM=xterm cat /etc/ansible/roles/role_under_test/tests/test.yml
+  # Check syntax of ansible playbook
+  - sudo docker exec centos-${OS_VERSION} ansible-playbook /etc/ansible/roles/mobile-net-setup-role/tests/test.yml --syntax-check
+  # Run ansible playbook
+  - sudo docker exec centos-${OS_VERSION} ansible-playbook /etc/ansible/roles/mobile-net-setup-role/tests/test.yml
+
+after_script:
+  - sudo docker stop centos-${OS_VERSION}
 
 notifications:
+  webhooks: https://galaxy.ansible.com/api/v1/notifications/
