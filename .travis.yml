@@ -40,6 +40,8 @@ script:
   - 'docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml --syntax-check'
 
   # Test role.
+  - 'docker exec --tty "$(cat ${container_id})" env TERM=xterm ls -l /etc/'
+  - 'docker exec --tty "$(cat ${container_id})" env TERM=xterm ls -l /etc/network/'
   - 'docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml'
 
   # Test role idempotence.
@@ -51,7 +53,7 @@ script:
     && (echo 'Idempotence test: pass' && exit 0)
     || (echo 'Idempotence test: fail' && exit 1)
   # Ensure Java is installed.
-  - 'docker exec --tty "$(cat ${container_id})" env TERM=xterm which java'
+  #- 'docker exec --tty "$(cat ${container_id})" env TERM=xterm which java'
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/
