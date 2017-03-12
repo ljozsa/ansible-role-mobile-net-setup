@@ -4,7 +4,6 @@ sudo: required
 
 services: 
   - docker
-
 env:
   global:
     COMMAND=/usr/lib/systemd/systemd --system
