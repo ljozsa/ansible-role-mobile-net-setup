@@ -2,43 +2,59 @@
 language: python
 sudo: required
 
-services:
-  - docker
+services: docker
 
 env:
-  - DEBIAN_VERSION=jessie
-  - CENTOS_VERSION=6
-  - CENTOS_VERSION=7
+  - distro: centos7
+    init: /usr/lib/systemd/systemd
+    run_opts: "--privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
+  - distro: centos6
+    init: /sbin/init
+    run_opts: ""
+  - distro: fedora24
+    init: /usr/lib/systemd/systemd
+    run_opts: "--privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
+  - distro: ubuntu1604
+    init: /lib/systemd/systemd
+    run_opts: "--privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
+  - distro: ubuntu1404
+    init: /sbin/init
+    run_opts: ""
+  - distro: ubuntu1204
+    init: /sbin/init
+    run_opts: ""
+  - distro: debian8
+    init: /lib/systemd/systemd
+    run_opts: "--privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
 
 before_install:
-  - sudo docker pull debian:${DEBIAN_VERSION}
-  - sudo docker pull centos:${CENTOS_VERSION}
-
-install:
-  - sudo docker run --privileged --detach --net=host --volume="${PWD}":/etc/ansible/roles/ansible-role-mobile-net-setup:ro --name debian-${DEBIAN_VERSION} debian:${DEBIAN_VERSION} sleep 300
-  - sudo docker run --privileged --detach --net=host --volume="${PWD}":/etc/ansible/roles/ansible-role-mobile-net-setup:ro --name centos-${CENTOS_VERSION} debian:${CENTOS_VERSION} sleep 300
-
-  - sudo docker exec debian-${DEBIAN_VERSION} aptitude -q -y update
-  - sudo docker exec debian-${DEBIAN_VERSION} aptitude -q -y install ansible
-
-  - sudo docker exec debian-${OS_VERSION} yum -y install epel-release
-  - sudo docker exec debian-${OS_VERSION} yum -y install ansible
+  # Pull container.
+  - 'docker pull geerlingguy/docker-${distro}-ansible:latest'
 
 script:
-  # CENTOS
-  # Check syntax of ansible playbook
-  - sudo docker exec centos-${CENTOS_VERSION} ansible-playbook /etc/ansible/roles/ansible-role-mobile-net-setup/tests/test.yml --syntax-check
-  # Run ansible playbook
-  - sudo docker exec centos-${CENTOS_VERSION} ansible-playbook /etc/ansible/roles/ansible-role-mobile-net-setup/tests/test.yml
-  # DEBIAN
-  # Check syntax of ansible playbook
-  - sudo docker exec debian-${DEBIAN_VERSION} ansible-playbook /etc/ansible/roles/ansible-role-mobile-net-setup/tests/test.yml --syntax-check
-  # Run ansible playbook
-  - sudo docker exec debian-${DEBIAN_VERSION} ansible-playbook /etc/ansible/roles/ansible-role-mobile-net-setup/tests/test.yml
+  - container_id=$(mktemp)
+  # Run container in detached state.
+  - 'docker run --detach --volume="${PWD}":/etc/ansible/roles/role_under_test:ro ${run_opts} geerlingguy/docker-${distro}-ansible:latest "${init}" > "${container_id}"'
 
-after_script:
-  - sudo docker stop centos-${CENTOS_VERSION}
-  - sudo docker stop debian-${DEBIAN_VERSION}
+  # Ansible syntax check.
+  - 'docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml --syntax-check'
+
+  # Test role.
+  - 'docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml'
+
+  # Test role idempotence.
+  - idempotence=$(mktemp)
+  - docker exec "$(cat ${container_id})" ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml | tee -a ${idempotence}
+  - >
+    tail ${idempotence}
+    | grep -q 'changed=0.*failed=0'
+    && (echo 'Idempotence test: pass' && exit 0)
+    || (echo 'Idempotence test: fail' && exit 1)
+  # Ensure Java is installed.
+  - 'docker exec --tty "$(cat ${container_id})" env TERM=xterm which java'
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/
+
+  #- sudo docker run --privileged --detach --net=host --volume="${PWD}":/etc/ansible/roles/ansible-role-mobile-net-setup:ro --name debian-${DEBIAN_VERSION} debian:${DEBIAN_VERSION} sleep 300
+  #- sudo docker run --privileged --detach --net=host --volume="${PWD}":/etc/ansible/roles/ansible-role-mobile-net-setup:ro --name centos-${CENTOS_VERSION} debian:${CENTOS_VERSION} sleep 300

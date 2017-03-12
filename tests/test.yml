@@ -2,4 +2,4 @@
 - hosts: localhost
   connection: local
   roles:
-    - ansible-role-mobile-net-setup
+    - role_under_test
