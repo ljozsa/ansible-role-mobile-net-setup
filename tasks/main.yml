@@ -1,23 +1,4 @@
-- name: "copy authorized_key"
-  authorized_key:
-    user: root
-    state: present
-    key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
-
-- name: "generate ssh key for root"
-  user:
-    name: root
-    ssh_key_bits: 4096
-    generate_ssh_key: yes
-
-- name: "lock ogn/pi account"
-  user:
-    name: "{{ item }}"
-    password: ""
-  with_items:
-    - ogn
-    - pi
-
+---
 - name: "disable ipv6"
   sysctl:
     name: net.ipv6.conf.all.disable_ipv6
