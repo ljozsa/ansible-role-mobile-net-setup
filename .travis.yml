@@ -35,7 +35,7 @@ env:
 #      COMMAND=/bin/systemd --system
     - DOCKER_TAG=debian:8
       OS_TAG=debian-8
-      OS=ubuntu
+      OS=debian
       COMMAND=/bin/systemd --system
 
 before_install:
